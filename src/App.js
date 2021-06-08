@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import * as tt from '@tomtom-international/web-sdk-maps'
+import tt from '@tomtom-international/web-sdk-maps'
 import './App.css'
+
+import TextField from '@material-ui/core/TextField';
+
 
 function App() {
   const mapElement = useRef()
@@ -22,11 +25,27 @@ function App() {
 
     setMap(map)
 
-  }, [])
+    return () => map.remove()
+
+  }, [latitude, longitude])
+
+  const handleLongitude = (event) => setLongitude(event.target.value)
+  const handleLatitude = (event) => setLatitude(event.target.value)
 
   return (
     <div className="app">
       <div ref={mapElement} className="map"></div>
+      <TextField
+        label="Longitude"
+        id="longitude"
+        onChange={handleLongitude}
+      />
+
+      <TextField
+        label="Latitude"
+        id="latitude"
+        onChange={handleLatitude}
+      />
     </div>
   );
 }
