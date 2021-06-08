@@ -17,8 +17,8 @@ function App() {
   }, [])
 
   return (
-    <div className="App">
-      <div ref={mapElement}></div>
+    <div className="app">
+      <div ref={mapElement} className="map"></div>
     </div>
   );
 }
