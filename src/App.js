@@ -26,6 +26,25 @@ function App() {
     }
   }
 
+  const drawRoute = (geoJson, map) => {
+    if (map.getLayer('route')) {
+      map.removeLayer('route')
+      map.removeSource('route')
+    }
+    map.addLayer({
+      id: 'route',
+      type: 'line',
+      source: {
+        type: 'geojson',
+        data: geoJson
+      },
+      paint: {
+        'line-color': 'red',
+        'line-width': 6
+      }
+    })
+  }
+
   const addDeliveryMarker = (lngLat, map) => {
     const popupOffset = {
       bottom: [0, -35]
@@ -44,6 +63,7 @@ function App() {
       lng: longitude,
       lat: latitude
     }
+    const destinations = []
 
     let map = tt.map({
       key: process.env.REACT_APP_TOM_TOM_API_KEY,
@@ -83,22 +103,59 @@ function App() {
 
     addMarker()
 
-    // const pointsForDestinations = locations.map()
-    // const callParameters = {
-    //   key: process.env.REACT_APP_TOM_TOM_API_KEY,
-    //   destinations: pointsForDestinations,
-    //   origin: [convertToPoints(origin)]
-    // }
+    const sortDestinations = (locations) => {
+      const pointsForDestinations = locations.map(destination => convertToPoints(destination))
 
-    // return new Promise((resolve, reject) => {
-    //   ttapi.services
-    //     .matrixRouting(callParameters)
-    // })
+      const callParameters = {
+        key: process.env.REACT_APP_TOM_TOM_API_KEY,
+        destinations: pointsForDestinations,
+        origins: [convertToPoints(origin)]
+      }
 
-    const destinations = []
+      return new Promise((resolve, reject) => {
+        ttapi.services
+          .matrixRouting(callParameters)
+          .then(matrixAPIResults => {
+            const results = matrixAPIResults.matrix[0]
+            const resultsArray = results.map((result, index) => {
+              return {
+                location: locations[index],
+                drivingTime: result.response.routeSummary.travelTimeInSeconds
+              }
+            })
+
+            resultsArray.sort((a, b) => {
+              return a.drivingTime - b.drivingTime
+            })
+            const sortedLocations = resultsArray.map(result => {
+              return result.location
+            })
+            resolve(sortedLocations)
+          })
+      })
+    }
+
+    const recalculateRoutes = () => {
+      sortDestinations(destinations).then(sorted => {
+        sorted.unshift(origin)
+
+        ttapi.services
+          .calculateRoute({
+            key: process.env.REACT_APP_TOM_TOM_API_KEY,
+            locations: sorted
+          })
+          .then(routeData => {
+            const geoJson = routeData.toGeoJson()
+            drawRoute(geoJson, map)
+          })
+      })
+    }
+
+
     map.on('click', (e) => {
       destinations.push(e.lngLat)
       addDeliveryMarker(e.lngLat, map)
+      recalculateRoutes()
     })
 
     return () => map.remove()
