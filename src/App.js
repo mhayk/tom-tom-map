@@ -31,6 +31,10 @@ function App() {
     setMap(map)
 
     const addMarker = () => {
+      const popupOffset = {
+        bottom: [0, -35]
+      }
+      const popup = new tt.Popup({ offset: popupOffset }).setHTML('This is you!')
 
       const marker = new tt.Marker({
         draggable: true,
@@ -45,6 +49,8 @@ function App() {
         setLongitude(lngLat.lng)
         setLatitude(lngLat.lat)
       })
+
+      marker.setPopup(popup).togglePopup()
     }
 
     addMarker()
