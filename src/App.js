@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import tt from '@tomtom-international/web-sdk-maps'
+import * as tt from '@tomtom-international/web-sdk-maps'
 import './App.css'
+import '@tomtom-international/web-sdk-maps/dist/maps.css'
 
 import TextField from '@material-ui/core/TextField';
+import PersonPinCircleIcon from '@material-ui/icons/PersonPinCircle';
 
 
 function App() {
@@ -10,6 +12,9 @@ function App() {
   const [map, setMap] = useState({})
   const [longitude, setLongitude] = useState(-0.34675)
   const [latitude, setLatitude] = useState(51.46664)
+
+  const handleLongitude = (event) => setLongitude(event.target.value)
+  const handleLatitude = (event) => setLatitude(event.target.value)
 
   useEffect(() => {
     let map = tt.map({
@@ -25,29 +30,50 @@ function App() {
 
     setMap(map)
 
+    const addMarker = () => {
+
+      const marker = new tt.Marker({
+        draggable: true,
+        // element: <PersonPinCircleIcon />,
+
+      })
+        .setLngLat([longitude, latitude])
+        .addTo(map)
+
+      marker.on('dragend', () => {
+        const lngLat = marker.getLngLat()
+        setLongitude(lngLat.lng)
+        setLatitude(lngLat.lat)
+      })
+    }
+
+    addMarker()
+
     return () => map.remove()
 
   }, [latitude, longitude])
 
-  const handleLongitude = (event) => setLongitude(event.target.value)
-  const handleLatitude = (event) => setLatitude(event.target.value)
-
   return (
     <div className="app">
       <div ref={mapElement} className="map"></div>
-      <TextField
-        label="Longitude"
-        id="longitude"
-        onChange={handleLongitude}
-      />
+      <div>
+        <TextField
+          label="Longitude"
+          id="longitude"
+          onChange={handleLongitude}
+          value={longitude || ''}
+        />
 
-      <TextField
-        label="Latitude"
-        id="latitude"
-        onChange={handleLatitude}
-      />
+        <TextField
+          label="Latitude"
+          id="latitude"
+          onChange={handleLatitude}
+          value={latitude || ''}
+        />
+      </div>
     </div>
-  );
+  )
+
 }
 
 export default App
